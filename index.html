@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>U.S. National Parks Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { height: 100%; }
+
+    .custom-icon-white {
+      background-color: white;
+      border-radius: 50%;
+      width: 12px; height: 12px;
+      border: 2px solid black;
+    }
+
+    .custom-icon-colored {
+      background-color: green;
+      border-radius: 50%;
+      width: 12px; height: 12px;
+      border: 2px solid black;
+    }
+
+    #overlay {
+      position: absolute;
+      top: 200px;
+      left: 200px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+      width: 260px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    #overlayHeader {
+      cursor: move;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    #toggleButton, #resetButton {
+      font-size: 14px;
+      padding: 2px 6px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+
+    #toggleButton {
+      background: #ccc;
+    }
+
+    #resetButton {
+      background-color: #f44;
+      color: white;
+      margin-top: 5px;
+      width: 100%;
+    }
+
+    .visited-item {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .visited-item input {
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay">
+    <div id="overlayHeader">
+      <strong>Visited Parks</strong>
+      <button id="toggleButton">➖</button>
+    </div>
+    <div id="counter">0 / 63 visited</div>
+    <div id="visited-list"></div>
+    <button id="resetButton">Reset Visited</button>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const parks = [
+      { name: "Acadia National Park", lat: 44.35, lon: -68.21 },
+      { name: "American Samoa National Park", lat: -14.25, lon: -170.68 },
+      { name: "Arches National Park", lat: 38.68, lon: -109.57 },
+      { name: "Badlands National Park", lat: 43.75, lon: -102.5 },
+      { name: "Big Bend National Park", lat: 29.25, lon: -103.25 },
+      { name: "Biscayne National Park", lat: 25.65, lon: -80.08 },
+      { name: "Black Canyon of the Gunnison National Park", lat: 38.57, lon: -107.72 },
+      { name: "Bryce Canyon National Park", lat: 37.57, lon: -112.18 },
+      { name: "Canyonlands National Park", lat: 38.2, lon: -109.93 },
+      { name: "Capitol Reef National Park", lat: 38.28, lon: -111.25 },
+      { name: "Carlsbad Caverns National Park", lat: 32.17, lon: -104.44 },
+      { name: "Channel Islands National Park", lat: 34.01, lon: -119.42 },
+      { name: "Congaree National Park", lat: 33.78, lon: -80.78 },
+      { name: "Crater Lake National Park", lat: 42.94, lon: -122.1 },
+      { name: "Cuyahoga Valley National Park", lat: 41.24, lon: -81.55 },
+      { name: "Death Valley National Park", lat: 36.24, lon: -116.82 },
+      { name: "Denali National Park", lat: 63.33, lon: -150.5 },
+      { name: "Dry Tortugas National Park", lat: 24.63, lon: -82.87 },
+      { name: "Everglades National Park", lat: 25.32, lon: -80.93 },
+      { name: "Gates of the Arctic National Park", lat: 67.78, lon: -153.3 },
+      { name: "Gateway Arch National Park", lat: 38.63, lon: -90.19 },
+      { name: "Glacier Bay National Park", lat: 58.5, lon: -137.0 },
+      { name: "Glacier National Park", lat: 48.8, lon: -114.0 },
+      { name: "Grand Canyon National Park", lat: 36.06, lon: -112.14 },
+      { name: "Grand Teton National Park", lat: 43.73, lon: -110.8 },
+      { name: "Great Basin National Park", lat: 38.98, lon: -114.3 },
+      { name: "Great Sand Dunes National Park", lat: 37.73, lon: -105.51 },
+      { name: "Great Smoky Mountains National Park", lat: 35.68, lon: -83.53 },
+      { name: "Guadalupe Mountains National Park", lat: 31.92, lon: -104.87 },
+      { name: "Haleakalā National Park", lat: 20.72, lon: -156.17 },
+      { name: "Hawai'i Volcanoes National Park", lat: 19.38, lon: -155.2 },
+      { name: "Hot Springs National Park", lat: 34.51, lon: -93.06 },
+      { name: "Indiana Dunes National Park", lat: 41.65, lon: -87.06 },
+      { name: "Isle Royale National Park", lat: 47.99, lon: -88.91 },
+      { name: "Joshua Tree National Park", lat: 33.79, lon: -115.9 },
+      { name: "Katmai National Park", lat: 58.5, lon: -155.0 },
+      { name: "Kenai Fjords National Park", lat: 59.92, lon: -149.65 },
+      { name: "Kings Canyon National Park", lat: 36.8, lon: -118.55 },
+      { name: "Kobuk Valley National Park", lat: 67.55, lon: -159.28 },
+      { name: "Lake Clark National Park", lat: 60.97, lon: -153.42 },
+      { name: "Lassen Volcanic National Park", lat: 40.49, lon: -121.51 },
+      { name: "Mammoth Cave National Park", lat: 37.18, lon: -86.1 },
+      { name: "Mesa Verde National Park", lat: 37.18, lon: -108.49 },
+      { name: "Mount Rainier National Park", lat: 46.85, lon: -121.75 },
+      { name: "New River Gorge National Park", lat: 37.83, lon: -81.07 },
+      { name: "North Cascades National Park", lat: 48.7, lon: -121.2 },
+      { name: "Olympic National Park", lat: 47.97, lon: -123.5 },
+      { name: "Petrified Forest National Park", lat: 35.07, lon: -109.78 },
+      { name: "Pinnacles National Park", lat: 36.48, lon: -121.16 },
+      { name: "Redwood National Park", lat: 41.3, lon: -124.0 },
+      { name: "Rocky Mountain National Park", lat: 40.4, lon: -105.58 },
+      { name: "Saguaro National Park", lat: 32.25, lon: -110.5 },
+      { name: "Sequoia National Park", lat: 36.43, lon: -118.68 },
+      { name: "Shenandoah National Park", lat: 38.53, lon: -78.35 },
+      { name: "Theodore Roosevelt National Park", lat: 46.97, lon: -103.45 },
+      { name: "Virgin Islands National Park", lat: 18.34, lon: -64.73 },
+      { name: "Voyageurs National Park", lat: 48.5, lon: -92.88 },
+      { name: "White Sands National Park", lat: 32.78, lon: -106.17 },
+      { name: "Wind Cave National Park", lat: 43.57, lon: -103.48 },
+      { name: "Wrangell–St. Elias National Park", lat: 61.0, lon: -142.0 },
+      { name: "Yellowstone National Park", lat: 44.6, lon: -110.5 },
+      { name: "Yosemite National Park", lat: 37.83, lon: -119.5 },
+      { name: "Zion National Park", lat: 37.3, lon: -113.05 }
+    ];
+
+    const map = L.map('map').setView([39.8283, -98.5795], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const visitedSet = new Set(JSON.parse(localStorage.getItem("visitedParks") || "[]"));
+    const counterDisplay = document.getElementById("counter");
+    const visitedList = document.getElementById("visited-list");
+    const toggleButton = document.getElementById("toggleButton");
+    const resetButton = document.getElementById("resetButton");
+
+    function updateVisitedUI() {
+      counterDisplay.textContent = `${visitedSet.size} / 63 visited`;
+      visitedList.innerHTML = "";
+      [...visitedSet].sort().forEach(name => {
+        const div = document.createElement("div");
+        div.className = "visited-item";
+        div.innerHTML = `<input type="checkbox" checked disabled /><span>${name}</span>`;
+        visitedList.appendChild(div);
+      });
+      localStorage.setItem("visitedParks", JSON.stringify([...visitedSet]));
+    }
+
+    let collapsed = false;
+    toggleButton.onclick = () => {
+      collapsed = !collapsed;
+      counterDisplay.style.display = collapsed ? "none" : "block";
+      visitedList.style.display = collapsed ? "none" : "block";
+      resetButton.style.display = collapsed ? "none" : "block";
+      toggleButton.textContent = collapsed ? "➕" : "➖";
+    };
+
+    resetButton.onclick = () => {
+      visitedSet.clear();
+      updateVisitedUI();
+      location.reload(); // refresh to update map icons too
+    };
+
+    parks.forEach(park => {
+      let isColored = visitedSet.has(park.name);
+      const marker = L.marker([park.lat, park.lon], {
+        icon: L.divIcon({ className: isColored ? 'custom-icon-colored' : 'custom-icon-white' })
+      }).addTo(map);
+
+      marker.bindTooltip(park.name);
+
+      marker.on("click", () => {
+        isColored = !isColored;
+        marker.setIcon(L.divIcon({ className: isColored ? 'custom-icon-colored' : 'custom-icon-white' }));
+        if (isColored) visitedSet.add(park.name);
+        else visitedSet.delete(park.name);
+        updateVisitedUI();
+      });
+
+      marker.on("dblclick", () => {
+        isColored = false;
+        marker.setIcon(L.divIcon({ className: 'custom-icon-white' }));
+        visitedSet.delete(park.name);
+        updateVisitedUI();
+      });
+    });
+
+    updateVisitedUI();
+
+    // Make overlay draggable
+    dragElement(document.getElementById("overlay"));
+
+    function dragElement(elmnt) {
+      const header = document.getElementById("overlayHeader");
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      (header || elmnt).onmousedown = dragMouseDown;
+      (header || elmnt).ontouchstart = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        if (e.type === "touchstart") {
+          pos3 = e.touches[0].clientX;
+          pos4 = e.touches[0].clientY;
+        } else {
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+        }
+
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+        document.ontouchend = closeDragElement;
+        document.ontouchmove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        let clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+        let clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+        pos1 = pos3 - clientX;
+        pos2 = pos4 - clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
+      }
+    }
+  </script>
+</body>
+</html>
