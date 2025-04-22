@@ -1,6 +1,6 @@
 {
   "name": "us-national-parks-tracker",
   "scripts": {
-    "build": "mkdir -p dist && cp index.html dist/index.html && cp -R assets dist/"
+    "build": "mkdir -p dist && cp index.html dist/index.html"
   }
 }
