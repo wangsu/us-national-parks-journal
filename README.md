@@ -37,5 +37,5 @@ An interactive, shareable map of all 63 U.S. National Parks built with [Leaflet.
 
 1. **Clone the repo**  
    ```bash
-   git clone https://github.com/yourusername/us-national-parks-tracker.git
-   cd us-national-parks-tracker
+   git clone https://github.com/wangsu/us-national-parks-journal.git
+   cd us-national-parks-journal
