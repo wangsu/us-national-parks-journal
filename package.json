@@ -1,6 +1,6 @@
 {
-  "name": "us-national-parks-journal",
+  "name": "us-national-parks-tracker",
   "scripts": {
-    "build": "echo \"no build needed\""
+    "build": "mkdir -p dist && cp index.html dist/index.html && cp -R assets dist/"
   }
 }
