@@ -1,4 +1,4 @@
-# US National Parks Tracker
+# US National Parks Journal
 
 An interactive, shareable map of all 63 U.S. National Parks built with [Leaflet.js](https://leafletjs.com).  Click to mark parks as “visited,” double‑click or use the **Reset** button to unmark, and share your progress via a URL query string or reversible hash.
 
