@@ -6,8 +6,7 @@ An interactive, shareable map of all 63 U.S. National Parks built with [Leaflet.
 
 ## 🗺️ Demo
 
-🔗 Live demo: https://yourusername.github.io/us-national-parks-tracker/  
-<small>(replace `yourusername` and repo name as appropriate)</small>
+🔗 Live demo: https://nationalparkjournal.wangsu.dev/
 
 ---
 
